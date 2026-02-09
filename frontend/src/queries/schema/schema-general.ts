@@ -2564,7 +2564,6 @@ export type QuickFilterType = 'manual-options' | 'auto-discovery'
 export enum QuickFilterContext {
     ErrorTrackingIssueFilters = 'error-tracking-issue-filters',
     LogsFilters = 'logs-filters',
-    Dashboards = 'dashboards',
 }
 
 /** @title ErrorTrackingIssueStatus */

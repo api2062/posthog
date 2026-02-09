@@ -28648,7 +28648,7 @@
             "type": "object"
         },
         "QuickFilterContext": {
-            "enum": ["error-tracking-issue-filters", "logs-filters", "dashboards"],
+            "enum": ["error-tracking-issue-filters", "logs-filters"],
             "type": "string"
         },
         "QuickFilterType": {
