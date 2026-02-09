@@ -3451,6 +3451,7 @@ class QueryTiming(BaseModel):
 class QuickFilterContext(StrEnum):
     ERROR_TRACKING_ISSUE_FILTERS = "error-tracking-issue-filters"
     LOGS_FILTERS = "logs-filters"
+    DASHBOARDS = "dashboards"
 
 
 class QuickFilterType(StrEnum):
