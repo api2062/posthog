@@ -4782,7 +4782,6 @@ export interface SourceFieldSelectConfigOption {
     label: string
     value: string
     fields?: SourceFieldConfig[]
-    deprecated?: boolean
 }
 
 export interface SourceFieldSelectConfig {

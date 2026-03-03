@@ -31653,9 +31653,6 @@
         "SourceFieldSelectConfigOption": {
             "additionalProperties": false,
             "properties": {
-                "deprecated": {
-                    "type": "boolean"
-                },
                 "fields": {
                     "items": {
                         "$ref": "#/definitions/SourceFieldConfig"
