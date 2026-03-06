@@ -126,7 +126,7 @@ export function CustomerAnalyticsScene({ tabId }: { tabId?: string }): JSX.Eleme
                                 <LemonButton
                                     type="primary"
                                     size="small"
-                                    to={urls.customerJourneyBuilder()}
+                                    to={urls.customerJourneyTemplates()}
                                     data-attr="new-journey"
                                 >
                                     New journey

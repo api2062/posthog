@@ -51,6 +51,8 @@ export const productScenes: Record<string, () => Promise<any>> = {
     CustomerAnalytics: () => import('../../products/customer_analytics/frontend/CustomerAnalyticsScene'),
     CustomerAnalyticsConfiguration: () =>
         import('../../products/customer_analytics/frontend/scenes/CustomerAnalyticsConfigurationScene/CustomerAnalyticsConfigurationScene'),
+    CustomerJourneyTemplates: () =>
+        import('../../products/customer_analytics/frontend/scenes/CustomerJourneyTemplatesScene/CustomerJourneyTemplatesScene'),
     CustomerJourneyBuilder: () =>
         import('../../products/customer_analytics/frontend/scenes/CustomerJourneyBuilderScene/CustomerJourneyBuilderScene'),
     DataWarehouse: () => import('../../products/data_warehouse/DataWarehouseScene'),
@@ -118,6 +120,7 @@ export const productRoutes: Record<string, [string, string]> = {
     '/support/tickets/:ticketId': ['SupportTicketDetail', 'supportTicketDetail'],
     '/support/settings': ['SupportSettings', 'supportSettings'],
     '/customer_analytics/dashboard': ['CustomerAnalytics', 'customerAnalyticsDashboard'],
+    '/customer_analytics/journeys/templates': ['CustomerJourneyTemplates', 'customerJourneyTemplates'],
     '/customer_analytics/journeys/new': ['CustomerJourneyBuilder', 'customerJourneyBuilder'],
     '/customer_analytics/journeys': ['CustomerAnalytics', 'customerAnalyticsJourneys'],
     '/customer_analytics/configuration': ['CustomerAnalyticsConfiguration', 'customerAnalyticsConfiguration'],
@@ -268,6 +271,7 @@ export const productConfiguration: Record<string, any> = {
         projectBased: true,
         name: 'Customer analytics configuration',
     },
+    CustomerJourneyTemplates: { projectBased: true, name: 'New journey' },
     CustomerJourneyBuilder: { projectBased: true, name: 'New journey' },
     DataWarehouse: {
         name: 'Data warehouse',
@@ -535,6 +539,7 @@ export const productUrls = {
     customerAnalyticsDashboard: (): string => '/customer_analytics/dashboard',
     customerAnalyticsJourneys: (): string => '/customer_analytics/journeys',
     customerAnalyticsConfiguration: (): string => '/customer_analytics/configuration',
+    customerJourneyTemplates: (): string => '/customer_analytics/journeys/templates',
     customerJourneyBuilder: (): string => '/customer_analytics/journeys/new',
     dashboards: (): string => '/dashboard',
     dashboard: (id: string | number, highlightInsightId?: string): string =>
@@ -1175,7 +1180,7 @@ export const getTreeItemsProducts = (): FileSystemImport[] => [
         tags: ['beta'],
         flag: FEATURE_FLAGS.CUSTOMER_ANALYTICS,
         sceneKey: 'CustomerAnalytics',
-        sceneKeys: ['CustomerAnalytics', 'CustomerJourneyBuilder'],
+        sceneKeys: ['CustomerAnalytics', 'CustomerJourneyTemplates', 'CustomerJourneyBuilder'],
     },
     {
         path: 'Dashboards',
