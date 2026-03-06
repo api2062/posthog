@@ -58,6 +58,7 @@ class _ActionStepPropertiesField(serializers.ListField):
     pass
 
 
+
 class ActionStepJSONSerializer(serializers.Serializer):
     event = serializers.CharField(
         required=False,
