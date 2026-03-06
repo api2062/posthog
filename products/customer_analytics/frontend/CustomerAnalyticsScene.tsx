@@ -118,6 +118,15 @@ export function CustomerAnalyticsScene({ tabId }: { tabId?: string }): JSX.Eleme
                                     Save
                                 </LemonButton>
                             </div>
+                        ) : activeTab === 'journeys' ? (
+                            <LemonButton
+                                type="primary"
+                                size="small"
+                                to={urls.customerJourneyBuilder()}
+                                data-attr="new-journey"
+                            >
+                                New journey
+                            </LemonButton>
                         ) : (
                             <AppShortcut
                                 name="CustomerAnalyticsSettings"

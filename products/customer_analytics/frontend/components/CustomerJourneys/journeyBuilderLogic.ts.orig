@@ -103,34 +103,56 @@ export const journeyBuilderLogic = kea<journeyBuilderLogicType>([
     }),
 
     reducers({
+<<<<<<< HEAD
+        isBuilderOpen: [
+            false,
+            {
+                openBuilder: () => true,
+                addJourneySuccess: () => false,
+            },
+        ],
+=======
+>>>>>>> 8a22ea8570 (feat(customer-journeys): Revamp journey builder and empty state)
         query: [
             createDefaultQuery(),
             {
                 setQuery: (_, { query }) => query,
+<<<<<<< HEAD
                 setQueryFromViz: (_, { query }) => query,
                 addJourneySuccess: () => createDefaultQuery(),
+=======
+                resetBuilder: () => createDefaultQuery(),
+>>>>>>> 8a22ea8570 (feat(customer-journeys): Revamp journey builder and empty state)
             },
         ],
         journeyName: [
             '',
             {
                 setJourneyName: (_, { name }) => name,
+<<<<<<< HEAD
                 addJourneySuccess: () => '',
+=======
+                resetBuilder: () => '',
             },
         ],
         journeyDescription: [
             '',
             {
                 setJourneyDescription: (_, { description }) => description,
-                addJourneySuccess: () => '',
+                resetBuilder: () => '',
+>>>>>>> 8a22ea8570 (feat(customer-journeys): Revamp journey builder and empty state)
             },
         ],
         isSaving: [
             false,
             {
                 saveJourney: () => true,
+<<<<<<< HEAD
                 addJourneySuccess: () => false,
                 addJourneyFailure: () => false,
+=======
+                resetBuilder: () => false,
+>>>>>>> 8a22ea8570 (feat(customer-journeys): Revamp journey builder and empty state)
                 saveJourneyFailure: () => false,
             },
         ],
@@ -266,9 +288,14 @@ export const journeyBuilderLogic = kea<journeyBuilderLogicType>([
         },
 
         saveJourney: async () => {
-            const { series, journeyName, journeyDescription, query } = values
+<<<<<<< HEAD
+            const { series, journeyName, query } = values
             const name = (journeyName.trim() || 'Untitled journey').slice(0, JOURNEY_NAME_MAX_LENGTH)
             const insightName = `${INSIGHT_NAME_PREFIX}${name}`.slice(0, JOURNEY_NAME_MAX_LENGTH)
+=======
+            const { series, journeyName, journeyDescription, query } = values
+            const name = journeyName.trim() || 'Untitled journey'
+>>>>>>> 8a22ea8570 (feat(customer-journeys): Revamp journey builder and empty state)
 
             const hasEmptySteps = series.some((s) => {
                 if (s.kind === NodeKind.EventsNode) {
@@ -291,8 +318,12 @@ export const journeyBuilderLogic = kea<journeyBuilderLogicType>([
             try {
                 const insight = await insightsApi.create({
                     query,
+<<<<<<< HEAD
                     name: insightName,
+=======
+                    name: `Journey: ${name}`,
                     description: journeyDescription.trim() || undefined,
+>>>>>>> 8a22ea8570 (feat(customer-journeys): Revamp journey builder and empty state)
                     saved: true,
                 })
 
