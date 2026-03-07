@@ -3,7 +3,9 @@ import { MemoryCache } from '@/lib/cache/MemoryCache'
 import { SessionManager } from '@/lib/SessionManager'
 import { StateManager } from '@/lib/StateManager'
 import type { InsightQuery } from '@/schema/query'
-import type { Context } from '@/tools/types'
+import { GENERATED_TOOL_MAP } from '@/tools/generated'
+import { TOOL_MAP } from '@/tools/index'
+import type { Context, ToolBase, ZodObjectAny } from '@/tools/types'
 
 export const API_BASE_URL = process.env.TEST_POSTHOG_API_BASE_URL || 'http://localhost:8010'
 export const API_TOKEN = process.env.TEST_POSTHOG_PERSONAL_API_KEY
@@ -86,7 +88,11 @@ export async function cleanupResources(
 
     for (const dashboardId of resources.dashboards) {
         try {
-            await client.dashboards({ projectId }).delete({ dashboardId })
+            await client.request({
+                method: 'PATCH',
+                path: `/api/projects/${projectId}/dashboards/${dashboardId}/`,
+                body: { deleted: true },
+            })
         } catch (error) {
             console.warn(`Failed to cleanup dashboard ${dashboardId}:`, error)
         }
@@ -133,6 +139,19 @@ export function parseToolResponse(result: any): any {
     // Tool handlers now return plain JSON objects directly
     // The MCP server wraps them with formatResponse, but tests call handlers directly
     return result
+}
+
+/**
+ * Look up a tool by name from the combined hand-written and generated tool maps.
+ * Throws if the tool is not found.
+ */
+export function getToolByName(name: string): ToolBase<ZodObjectAny> {
+    const allTools = { ...TOOL_MAP, ...GENERATED_TOOL_MAP }
+    const factory = allTools[name]
+    if (!factory) {
+        throw new Error(`Tool "${name}" not found`)
+    }
+    return factory()
 }
 
 export function generateUniqueKey(prefix: string): string {
