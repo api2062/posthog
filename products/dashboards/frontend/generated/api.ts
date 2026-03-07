@@ -9,8 +9,10 @@ import { apiMutator } from '../../../../frontend/src/lib/api-orval-mutator'
  * OpenAPI spec version: 1.0.0
  */
 import type {
+    AddInsightRequestApi,
     DashboardApi,
     DashboardCollaboratorApi,
+    DashboardsAddInsightCreateParams,
     DashboardsAnalyzeRefreshResultCreateParams,
     DashboardsCreateFromTemplateJsonCreateParams,
     DashboardsCreateParams,
@@ -19,6 +21,7 @@ import type {
     DashboardsListParams,
     DashboardsMoveTilePartialUpdateParams,
     DashboardsPartialUpdateParams,
+    DashboardsReorderTilesCreateParams,
     DashboardsRetrieveParams,
     DashboardsSnapshotCreateParams,
     DashboardsStreamTilesRetrieveParams,
@@ -29,6 +32,7 @@ import type {
     PaginatedDataColorThemeListApi,
     PatchedDashboardApi,
     PatchedDataColorThemeApi,
+    ReorderTilesRequestApi,
     SharingConfigurationApi,
 } from './api.schemas'
 
@@ -402,6 +406,41 @@ export const dashboardsDestroy = async (
     })
 }
 
+export const getDashboardsAddInsightCreateUrl = (
+    projectId: string,
+    id: number,
+    params?: DashboardsAddInsightCreateParams
+) => {
+    const normalizedParams = new URLSearchParams()
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+        if (value !== undefined) {
+            normalizedParams.append(key, value === null ? 'null' : value.toString())
+        }
+    })
+
+    const stringifiedParams = normalizedParams.toString()
+
+    return stringifiedParams.length > 0
+        ? `/api/projects/${projectId}/dashboards/${id}/add_insight/?${stringifiedParams}`
+        : `/api/projects/${projectId}/dashboards/${id}/add_insight/`
+}
+
+export const dashboardsAddInsightCreate = async (
+    projectId: string,
+    id: number,
+    addInsightRequestApi: AddInsightRequestApi,
+    params?: DashboardsAddInsightCreateParams,
+    options?: RequestInit
+): Promise<DashboardApi> => {
+    return apiMutator<DashboardApi>(getDashboardsAddInsightCreateUrl(projectId, id, params), {
+        ...options,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...options?.headers },
+        body: JSON.stringify(addInsightRequestApi),
+    })
+}
+
 /**
  * Generate AI analysis comparing before/after dashboard refresh.
 Expects cache_key in request body pointing to the stored 'before' state.
@@ -473,6 +512,41 @@ export const dashboardsMoveTilePartialUpdate = async (
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...options?.headers },
         body: JSON.stringify(patchedDashboardApi),
+    })
+}
+
+export const getDashboardsReorderTilesCreateUrl = (
+    projectId: string,
+    id: number,
+    params?: DashboardsReorderTilesCreateParams
+) => {
+    const normalizedParams = new URLSearchParams()
+
+    Object.entries(params || {}).forEach(([key, value]) => {
+        if (value !== undefined) {
+            normalizedParams.append(key, value === null ? 'null' : value.toString())
+        }
+    })
+
+    const stringifiedParams = normalizedParams.toString()
+
+    return stringifiedParams.length > 0
+        ? `/api/projects/${projectId}/dashboards/${id}/reorder_tiles/?${stringifiedParams}`
+        : `/api/projects/${projectId}/dashboards/${id}/reorder_tiles/`
+}
+
+export const dashboardsReorderTilesCreate = async (
+    projectId: string,
+    id: number,
+    reorderTilesRequestApi: ReorderTilesRequestApi,
+    params?: DashboardsReorderTilesCreateParams,
+    options?: RequestInit
+): Promise<DashboardApi> => {
+    return apiMutator<DashboardApi>(getDashboardsReorderTilesCreateUrl(projectId, id, params), {
+        ...options,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...options?.headers },
+        body: JSON.stringify(reorderTilesRequestApi),
     })
 }
 
