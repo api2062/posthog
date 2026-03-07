@@ -256,6 +256,12 @@ class DashboardBasicSerializer(
             "team_id",
         ]
         read_only_fields = fields
+        extra_kwargs = {
+            "name": {"help_text": "Name of the dashboard."},
+            "description": {"help_text": "Description of the dashboard."},
+            "pinned": {"help_text": "Whether the dashboard is pinned to the top of the list."},
+            "restriction_level": {"help_text": "Controls who can edit the dashboard."},
+        }
 
     def get_effective_restriction_level(self, dashboard: Dashboard) -> Dashboard.RestrictionLevel:
         if self.context.get("is_shared"):
@@ -282,8 +288,10 @@ class DashboardMetadataSerializer(DashboardBasicSerializer):
     effective_restriction_level = serializers.SerializerMethodField()
     access_control_version = serializers.SerializerMethodField()
     is_shared = serializers.BooleanField(source="is_sharing_enabled", read_only=True, required=False)
-    breakdown_colors = serializers.JSONField(required=False)
-    data_color_theme_id = serializers.IntegerField(required=False, allow_null=True)
+    breakdown_colors = serializers.JSONField(required=False, help_text="Custom color mapping for breakdown values.")
+    data_color_theme_id = serializers.IntegerField(
+        required=False, allow_null=True, help_text="ID of the color theme used for chart visualizations."
+    )
     persisted_filters = serializers.SerializerMethodField()
     persisted_variables = serializers.SerializerMethodField()
 
@@ -309,9 +317,24 @@ class DashboardMetadataSerializer(DashboardBasicSerializer):
 
 class DashboardSerializer(DashboardMetadataSerializer):
     tiles = serializers.SerializerMethodField()
-    use_template = serializers.CharField(write_only=True, allow_blank=True, required=False)
-    use_dashboard = serializers.IntegerField(write_only=True, allow_null=True, required=False)
-    delete_insights = serializers.BooleanField(write_only=True, required=False, default=False)
+    use_template = serializers.CharField(
+        write_only=True,
+        allow_blank=True,
+        required=False,
+        help_text="Template key to create the dashboard from a predefined template.",
+    )
+    use_dashboard = serializers.IntegerField(
+        write_only=True,
+        allow_null=True,
+        required=False,
+        help_text="ID of an existing dashboard to duplicate.",
+    )
+    delete_insights = serializers.BooleanField(
+        write_only=True,
+        required=False,
+        default=False,
+        help_text="When deleting, also delete insights that are only on this dashboard.",
+    )
     _create_in_folder = serializers.CharField(required=False, allow_blank=True, write_only=True)
 
     class Meta:
