@@ -179,7 +179,7 @@ tools:
             destructive: true
             idempotent: false
         title: Delete dashboard
-        description: >
+        description: |
             Delete a dashboard by ID. The dashboard will be soft-deleted and no longer appear in lists.
         soft_delete: true
     add-insight-to-dashboard:
