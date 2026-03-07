@@ -2346,3 +2346,80 @@ class TestDashboard(APIBaseTest, QueryMatchingTest):
             response.json(),
             {"error": "Analysis context expired or not found. Please refresh the dashboard again."},
         )
+
+    def test_add_insight_to_dashboard(self):
+        dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard")
+        insight = Insight.objects.create(team=self.team, name="Test Insight")
+
+        response = self.client.post(
+            f"/api/environments/{self.team.pk}/dashboards/{dashboard.pk}/add_insight/",
+            {"insight_id": insight.pk},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["id"], dashboard.pk)
+        self.assertTrue(DashboardTile.objects.filter(dashboard=dashboard, insight=insight).exists())
+
+    def test_add_insight_to_dashboard_is_idempotent(self):
+        dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard")
+        insight = Insight.objects.create(team=self.team, name="Test Insight")
+        DashboardTile.objects.create(dashboard=dashboard, insight=insight)
+
+        response = self.client.post(
+            f"/api/environments/{self.team.pk}/dashboards/{dashboard.pk}/add_insight/",
+            {"insight_id": insight.pk},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(DashboardTile.objects.filter(dashboard=dashboard, insight=insight).count(), 1)
+
+    def test_add_insight_to_dashboard_invalid_insight(self):
+        dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard")
+
+        response = self.client.post(
+            f"/api/environments/{self.team.pk}/dashboards/{dashboard.pk}/add_insight/",
+            {"insight_id": 999999},
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_add_insight_cross_team_returns_404(self):
+        other_team = Team.objects.create(organization=self.organization, name="Other Team")
+        dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard")
+        insight = Insight.objects.create(team=other_team, name="Other Team Insight")
+
+        response = self.client.post(
+            f"/api/environments/{self.team.pk}/dashboards/{dashboard.pk}/add_insight/",
+            {"insight_id": insight.pk},
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_reorder_tiles(self):
+        dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard")
+        insight1 = Insight.objects.create(team=self.team, name="Insight 1")
+        insight2 = Insight.objects.create(team=self.team, name="Insight 2")
+        tile1 = DashboardTile.objects.create(dashboard=dashboard, insight=insight1)
+        tile2 = DashboardTile.objects.create(dashboard=dashboard, insight=insight2)
+
+        response = self.client.post(
+            f"/api/environments/{self.team.pk}/dashboards/{dashboard.pk}/reorder_tiles/",
+            {"tile_order": [tile2.pk, tile1.pk]},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["id"], dashboard.pk)
+
+        tile1.refresh_from_db()
+        tile2.refresh_from_db()
+        # tile2 should be in position (0,0), tile1 in position (6,0)
+        self.assertEqual(tile2.layouts["sm"]["x"], 0)
+        self.assertEqual(tile2.layouts["sm"]["y"], 0)
+        self.assertEqual(tile1.layouts["sm"]["x"], 6)
+        self.assertEqual(tile1.layouts["sm"]["y"], 0)
+
+    def test_reorder_tiles_invalid_tile_ids(self):
+        dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard")
+
+        response = self.client.post(
+            f"/api/environments/{self.team.pk}/dashboards/{dashboard.pk}/reorder_tiles/",
+            {"tile_order": [999999]},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

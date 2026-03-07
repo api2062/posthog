@@ -128,6 +128,17 @@ def serialize_tile_with_context(tile, order: int, context: dict) -> tuple[int, d
         return order, tile_data
 
 
+class AddInsightRequestSerializer(serializers.Serializer):
+    insight_id = serializers.IntegerField(help_text="ID of the insight to add to this dashboard.")
+
+
+class ReorderTilesRequestSerializer(serializers.Serializer):
+    tile_order = serializers.ListField(
+        child=serializers.IntegerField(),
+        help_text="Array of tile IDs in the desired display order (top to bottom, left to right).",
+    )
+
+
 class CanEditDashboard(BasePermission):
     message = "You don't have edit permissions for this dashboard."
 
@@ -1045,6 +1056,57 @@ class DashboardsViewSet(
             context=self.get_serializer_context(),
         )
         return Response(serializer.data)
+
+    @extend_schema(request=AddInsightRequestSerializer, responses={200: DashboardSerializer})
+    @action(methods=["POST"], detail=True, required_scopes=["dashboard:write"])
+    def add_insight(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        dashboard = self.get_object()
+        serializer = AddInsightRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        insight_id = serializer.validated_data["insight_id"]
+
+        insight = get_object_or_404(Insight, id=insight_id, team__project_id=self.team.project_id)
+        tile, _ = DashboardTile.objects_including_soft_deleted.get_or_create(dashboard=dashboard, insight=insight)
+        if tile.deleted:
+            tile.deleted = False
+            tile.save(update_fields=["deleted"])
+
+        return Response(DashboardSerializer(dashboard, context=self.get_serializer_context()).data)
+
+    @extend_schema(request=ReorderTilesRequestSerializer, responses={200: DashboardSerializer})
+    @action(methods=["POST"], detail=True, required_scopes=["dashboard:write"])
+    def reorder_tiles(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        dashboard = self.get_object()
+        serializer = ReorderTilesRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tile_order: list[int] = serializer.validated_data["tile_order"]
+
+        tile_width = 6
+        tile_height = 5
+
+        tiles = DashboardTile.objects.filter(dashboard=dashboard, id__in=tile_order)
+        tile_map = {tile.id: tile for tile in tiles}
+
+        missing = set(tile_order) - set(tile_map.keys())
+        if missing:
+            return Response(
+                {"detail": f"Tile IDs not found on this dashboard: {sorted(missing)}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        for index, tile_id in enumerate(tile_order):
+            tile = tile_map[tile_id]
+            row = index // 2
+            col = index % 2
+            tile.layouts = {
+                "sm": {"x": col * tile_width, "y": row * tile_height, "w": tile_width, "h": tile_height},
+                # xs is single-column (full 6-col mobile grid width)
+                "xs": {"x": 0, "y": index * tile_height, "w": tile_width, "h": tile_height},
+            }
+
+        DashboardTile.objects.bulk_update(tile_map.values(), ["layouts"])
+
+        return Response(DashboardSerializer(dashboard, context=self.get_serializer_context()).data)
 
     @action(
         methods=["POST"],
