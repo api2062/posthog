@@ -1131,6 +1131,13 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
         columns = self.visit(ctx.columnExprList())
         return ast.ColumnsExpr(columns=columns)
 
+    def visitColumnExprColumnsExclude(self, ctx: HogQLParser.ColumnExprColumnsExcludeContext):
+        exclude = [self.visit(ident) for ident in ctx.identifierList().identifier()]
+        return ast.ColumnsExpr(all_columns=True, exclude=exclude)
+
+    def visitColumnExprColumnsAll(self, ctx: HogQLParser.ColumnExprColumnsAllContext):
+        return ast.ColumnsExpr(all_columns=True)
+
     def visitColumnExprSpreadColumnsRegex(self, ctx: HogQLParser.ColumnExprSpreadColumnsRegexContext):
         pattern = parse_string_literal_ctx(ctx.STRING_LITERAL())
         start = ctx.start.start if ctx.start else None
@@ -1151,16 +1158,19 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
             end=end,
         )
 
+    def visitColumnExprNamedArg(self, ctx: HogQLParser.ColumnExprNamedArgContext):
+        raise NotImplementedError(f"Unsupported node: ColumnExprNamedArg")
+
     def visitColumnExprTagElement(self, ctx: HogQLParser.ColumnExprTagElementContext):
         return self.visit(ctx.hogqlxTagElement())
 
-    def visitArrowLambda(self, ctx: HogQLParser.ArrowLambdaContext):
+    def visitColumnLambdaExpr(self, ctx: HogQLParser.ColumnLambdaExprContext):
         return ast.Lambda(
             args=[self.visit(identifier) for identifier in ctx.identifier()],
             expr=self.visit(ctx.columnExpr() or ctx.block()),
         )
 
-    def visitDuckDBLambda(self, ctx: HogQLParser.DuckDBLambdaContext):
+    def visitColumnExprDuckDBLambda(self, ctx: HogQLParser.ColumnExprDuckDBLambdaContext):
         return ast.Lambda(
             args=[self.visit(identifier) for identifier in ctx.identifier()],
             expr=self.visit(ctx.columnExpr()),

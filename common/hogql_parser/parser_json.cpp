@@ -1893,6 +1893,27 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
     return json;
   }
 
+  VISIT(ColumnExprColumnsExclude) {
+    Json json = Json::object();
+    json["node"] = "ColumnsExpr";
+    if (!is_internal) addPositionInfo(json, ctx);
+    json["all_columns"] = true;
+    Json exclude = Json::array();
+    for (auto ident : ctx->identifierList()->identifier()) {
+      exclude.pushBack(visitAsString(ident));
+    }
+    json["exclude"] = std::move(exclude);
+    return json;
+  }
+
+  VISIT(ColumnExprColumnsAll) {
+    Json json = Json::object();
+    json["node"] = "ColumnsExpr";
+    if (!is_internal) addPositionInfo(json, ctx);
+    json["all_columns"] = true;
+    return json;
+  }
+
   VISIT(ColumnExprSpreadColumnsRegex) {
     Json json = Json::object();
     json["node"] = "SpreadExpr";
@@ -1917,11 +1938,13 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
 
   VISIT(ColumnExprTagElement) { return visit(ctx->hogqlxTagElement()); }
 
-  VISIT(ArrowLambda) {
+  VISIT_UNSUPPORTED(ColumnExprNamedArg)
+
+  VISIT(ColumnLambdaExpr) {
     auto column_expr_ctx = ctx->columnExpr();
     auto block_ctx = ctx->block();
     if (!column_expr_ctx && !block_ctx) {
-      throw ParsingError("ArrowLambda must have either a columnExpr or a block");
+      throw ParsingError("ColumnLambdaExpr must have either a columnExpr or a block");
     }
 
     Json expr_json;
@@ -1945,7 +1968,7 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
     return json;
   }
 
-  VISIT(DuckDBLambda) {
+  VISIT(ColumnExprDuckDBLambda) {
     vector<string> args_vec = visitAsVectorOfStrings(ctx->identifier());
 
     Json json = Json::object();
