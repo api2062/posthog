@@ -2424,6 +2424,28 @@ class TestDashboard(APIBaseTest, QueryMatchingTest):
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_add_insight_to_deleted_dashboard_returns_404(self):
+        dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard", deleted=True)
+        insight = Insight.objects.create(team=self.team, name="Test Insight")
+
+        response = self.client.post(
+            f"/api/environments/{self.team.pk}/dashboards/{dashboard.pk}/add_insight/",
+            {"insight_id": insight.pk},
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_reorder_tiles_on_deleted_dashboard_returns_404(self):
+        dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard", deleted=True)
+        insight = Insight.objects.create(team=self.team, name="Insight 1")
+        tile = DashboardTile.objects.create(dashboard=dashboard, insight=insight)
+
+        response = self.client.post(
+            f"/api/environments/{self.team.pk}/dashboards/{dashboard.pk}/reorder_tiles/",
+            {"tile_order": [tile.pk]},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_reorder_tiles_empty_tile_order_returns_400(self):
         dashboard = Dashboard.objects.create(team=self.team, name="Test Dashboard")
 

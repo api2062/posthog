@@ -1085,6 +1085,8 @@ class DashboardsViewSet(
     @action(methods=["POST"], detail=True, required_scopes=["dashboard:write"])
     def add_insight(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         dashboard = self.get_object()
+        if dashboard.deleted:
+            raise exceptions.NotFound()
         serializer = AddInsightRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         insight_id = serializer.validated_data["insight_id"]
@@ -1101,6 +1103,8 @@ class DashboardsViewSet(
     @action(methods=["POST"], detail=True, required_scopes=["dashboard:write"])
     def reorder_tiles(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         dashboard = self.get_object()
+        if dashboard.deleted:
+            raise exceptions.NotFound()
         serializer = ReorderTilesRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tile_order: list[int] = serializer.validated_data["tile_order"]
