@@ -651,6 +651,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitTableExprPivot(HogQLParser::TableExprPivotContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitTableExprValues(HogQLParser::TableExprValuesContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -664,6 +668,14 @@ public:
   }
 
   virtual std::any visitTableExprUnpivot(HogQLParser::TableExprUnpivotContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitPivotColumnList(HogQLParser::PivotColumnListContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitPivotColumn(HogQLParser::PivotColumnContext *ctx) override {
     return visitChildren(ctx);
   }
 
