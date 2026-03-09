@@ -1,7 +1,6 @@
 import { useActions, useMountedLogic, useValues } from 'kea'
 
-import { IconTrash } from '@posthog/icons'
-import { LemonButton, LemonSelect, Spinner } from '@posthog/lemon-ui'
+import { LemonSelect, Spinner } from '@posthog/lemon-ui'
 
 import { useAttachedLogic } from 'lib/logic/scenes/useAttachedLogic'
 
@@ -14,15 +13,9 @@ import { customerJourneysLogic } from './customerJourneysLogic'
 export function CustomerJourneys(): JSX.Element {
     const mountedSceneLogic = useMountedLogic(customerAnalyticsSceneLogic)
     const mountedCustomerJourneysLogic = customerJourneysLogic()
-    const {
-        journeyOptions,
-        journeysLoading,
-        activeJourney,
-        activeJourneyId,
-        activeInsightLoading,
-        activeJourneyFullQuery,
-    } = useValues(mountedCustomerJourneysLogic)
-    const { setActiveJourneyId, deleteJourney } = useActions(mountedCustomerJourneysLogic)
+    const { journeyOptions, journeysLoading, activeJourneyId, activeInsightLoading, activeJourneyFullQuery } =
+        useValues(mountedCustomerJourneysLogic)
+    const { setActiveJourneyId } = useActions(mountedCustomerJourneysLogic)
     useAttachedLogic(mountedCustomerJourneysLogic, mountedSceneLogic)
 
     if (journeysLoading) {
@@ -50,16 +43,6 @@ export function CustomerJourneys(): JSX.Element {
                     options={journeyOptions}
                     size="small"
                 />
-                {activeJourney && (
-                    <LemonButton
-                        icon={<IconTrash />}
-                        size="small"
-                        type="secondary"
-                        status="danger"
-                        onClick={() => deleteJourney(activeJourney.id)}
-                        tooltip="Remove this journey"
-                    />
-                )}
             </div>
 
             {activeInsightLoading ? (
