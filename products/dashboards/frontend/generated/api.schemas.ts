@@ -232,6 +232,7 @@ export interface DashboardApi {
     /** @nullable */
     readonly persisted_variables: DashboardApiPersistedVariables
     readonly team_id: number
+    quick_filter_ids?: unknown | null
     /** @nullable */
     readonly tiles: readonly DashboardApiTilesItem[] | null
     use_template?: string
@@ -318,6 +319,7 @@ export interface PatchedDashboardApi {
     /** @nullable */
     readonly persisted_variables?: PatchedDashboardApiPersistedVariables
     readonly team_id?: number
+    quick_filter_ids?: unknown | null
     /** @nullable */
     readonly tiles?: readonly PatchedDashboardApiTilesItem[] | null
     use_template?: string
