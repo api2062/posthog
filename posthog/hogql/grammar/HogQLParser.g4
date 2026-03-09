@@ -197,7 +197,7 @@ columnExpr
     | ASTERISK COLUMNS LPAREN columnExprList RPAREN                                      # ColumnExprSpreadColumnsList
     | identifier (LPAREN columnExprs=columnExprList? RPAREN) (LPAREN DISTINCT? columnArgList=columnExprList? RPAREN)? OVER LPAREN windowExpr RPAREN # ColumnExprWinFunction
     | identifier (LPAREN columnExprs=columnExprList? RPAREN) (LPAREN DISTINCT? columnArgList=columnExprList? RPAREN)? OVER identifier               # ColumnExprWinFunctionTarget
-    | identifier (LPAREN columnExprs=columnExprList? RPAREN)? LPAREN DISTINCT? columnArgList=columnExprList? RPAREN                                 # ColumnExprFunction
+    | identifier (LPAREN columnExprs=columnExprList? RPAREN)? LPAREN DISTINCT? columnArgList=columnExprList? (ORDER BY orderExprList)? RPAREN       # ColumnExprFunction
     | columnExpr LPAREN selectSetStmt RPAREN                                              # ColumnExprCallSelect
     | columnExpr LPAREN columnExprList? RPAREN                                            # ColumnExprCall
     | hogqlxTagElement                                                                    # ColumnExprTagElement

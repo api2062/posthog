@@ -883,6 +883,7 @@ class Call(Expr):
     https://clickhouse.com/docs/en/sql-reference/aggregate-functions/parametric-functions
     """
     distinct: bool = False
+    order_by: Optional[list["OrderExpr"]] = None
 
 
 @dataclass(kw_only=True)
