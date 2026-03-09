@@ -391,6 +391,7 @@ export const journeyBuilderLogic = kea<journeyBuilderLogicType>([
                 }
                 actions.setQuery(modifiedQuery)
                 actions.setJourneyName(insight.name || '')
+                actions.setJourneyDescription(insight.description || '')
                 actions.setInsightQuery(modifiedQuery)
             } catch (e) {
                 posthog.captureException(e)
@@ -434,6 +435,7 @@ export const journeyBuilderLogic = kea<journeyBuilderLogicType>([
                 actions.addJourney({
                     insightId: insight.id,
                     name,
+                    description: journeyDescription.trim() || undefined,
                 })
 
                 actions.resetBuilder()
