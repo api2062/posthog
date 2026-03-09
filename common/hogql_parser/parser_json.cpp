@@ -1154,6 +1154,7 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
 
   VISIT(Expr) { return visit(ctx->columnExpr()); }
 
+  VISIT_UNSUPPORTED(ColumnTypeExprCompound)
   VISIT_UNSUPPORTED(ColumnTypeExprSimple)
 
   VISIT_UNSUPPORTED(ColumnTypeExprNested)
@@ -1256,6 +1257,7 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
   VISIT_UNSUPPORTED(ColumnExprSubstring)
 
   VISIT_UNSUPPORTED(ColumnExprCast)
+  VISIT_UNSUPPORTED(ColumnExprTryCast)
 
   VISIT(ColumnExprPrecedence1) {
     string op;
@@ -1520,6 +1522,8 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
     json["property"] = visitAsJSON(ctx->columnExpr(1));
     return json;
   }
+
+  VISIT_UNSUPPORTED(ColumnExprArraySlice)
 
   VISIT(ColumnExprNullArrayAccess) {
     Json json = Json::object();

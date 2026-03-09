@@ -723,6 +723,9 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
     def visitColumnTypeExprComplex(self, ctx: HogQLParser.ColumnTypeExprComplexContext):
         raise NotImplementedError(f"Unsupported node: ColumnTypeExprComplex")
 
+    def visitColumnTypeExprCompound(self, ctx: HogQLParser.ColumnTypeExprCompoundContext):
+        raise NotImplementedError(f"Unsupported node: ColumnTypeExprCompound")
+
     def visitColumnTypeExprParam(self, ctx: HogQLParser.ColumnTypeExprParamContext):
         raise NotImplementedError(f"Unsupported node: ColumnTypeExprParam")
 
@@ -793,6 +796,9 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
 
     def visitColumnExprCast(self, ctx: HogQLParser.ColumnExprCastContext):
         raise NotImplementedError(f"Unsupported node: ColumnExprCast")
+
+    def visitColumnExprTryCast(self, ctx: HogQLParser.ColumnExprTryCastContext):
+        raise NotImplementedError(f"Unsupported node: ColumnExprTryCast")
 
     def visitColumnExprPrecedence1(self, ctx: HogQLParser.ColumnExprPrecedence1Context):
         if ctx.SLASH():
@@ -960,6 +966,9 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
         object: ast.Expr = self.visit(ctx.columnExpr(0))
         property: ast.Expr = self.visit(ctx.columnExpr(1))
         return ast.ArrayAccess(array=object, property=property)
+
+    def visitColumnExprArraySlice(self, ctx: HogQLParser.ColumnExprArraySliceContext):
+        raise NotImplementedError(f"Unsupported node: ColumnExprArraySlice")
 
     def visitColumnExprNullArrayAccess(self, ctx: HogQLParser.ColumnExprNullArrayAccessContext):
         object: ast.Expr = self.visit(ctx.columnExpr(0))
