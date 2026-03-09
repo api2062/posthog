@@ -352,12 +352,51 @@ def get_all_schemas_for_source_id(source_id: str, team_id: int):
     return list(ExternalDataSchema.objects.exclude(deleted=True).filter(team_id=team_id, source_id=source_id).all())
 
 
+STABLE_IDENTITY_KEYS = ("channel_id",)
+
+
+def _resolve_renames(
+    old_schemas: list["ExternalDataSchema"],
+    new_schemas: dict[str, dict],
+) -> None:
+    """Match old → new schemas by stable metadata keys and rename in place.
+
+    Mutates old_schemas (updates .name on renamed rows and saves) so that
+    downstream name-based diffing sees them as already matched.
+    """
+    new_by_stable_key: dict[tuple[str, str], str] = {}
+    for name, metadata in new_schemas.items():
+        for key in STABLE_IDENTITY_KEYS:
+            value = metadata.get(key)
+            if value is not None:
+                new_by_stable_key[(key, str(value))] = name
+
+    if not new_by_stable_key:
+        return
+
+    for old_schema in old_schemas:
+        if not old_schema.sync_type_config:
+            continue
+        for key in STABLE_IDENTITY_KEYS:
+            old_value = old_schema.sync_type_config.get(key)
+            if old_value is None:
+                continue
+            new_name = new_by_stable_key.get((key, str(old_value)))
+            if new_name is not None and new_name != old_schema.name:
+                old_schema.name = new_name
+                old_schema.save(update_fields=["name"])
+                break
+
+
 def sync_old_schemas_with_new_schemas(
     new_schemas: dict[str, dict], source_id: str, team_id: int
 ) -> tuple[list[str], list[str]]:
-    new_schema_names = list(new_schemas.keys())
-
     old_schemas = get_all_schemas_for_source_id(source_id=source_id, team_id=team_id)
+
+    # Rename schemas matched by stable identity before name-based diffing
+    _resolve_renames(old_schemas, new_schemas)
+
+    new_schema_names = list(new_schemas.keys())
     old_schemas_names = [schema.name for schema in old_schemas]
 
     schemas_to_create = [name for name in new_schema_names if name not in old_schemas_names]
