@@ -1,6 +1,6 @@
 import { useActions, useMountedLogic, useValues } from 'kea'
 
-import { IconPlus, IconTrash } from '@posthog/icons'
+import { IconTrash } from '@posthog/icons'
 import { LemonButton, LemonSelect, Spinner } from '@posthog/lemon-ui'
 
 import { useAttachedLogic } from 'lib/logic/scenes/useAttachedLogic'
@@ -8,7 +8,6 @@ import { useAttachedLogic } from 'lib/logic/scenes/useAttachedLogic'
 import { Query } from '~/queries/Query/Query'
 
 import { customerAnalyticsSceneLogic } from '../../customerAnalyticsSceneLogic'
-import { AddJourneyModal } from './AddJourneyModal'
 import { CustomerJourneysEmptyState } from './CustomerJourneysEmptyState'
 import { customerJourneysLogic } from './customerJourneysLogic'
 
@@ -23,7 +22,7 @@ export function CustomerJourneys(): JSX.Element {
         activeInsightLoading,
         activeJourneyFullQuery,
     } = useValues(mountedCustomerJourneysLogic)
-    const { showAddJourneyModal, setActiveJourneyId, deleteJourney } = useActions(mountedCustomerJourneysLogic)
+    const { setActiveJourneyId, deleteJourney } = useActions(mountedCustomerJourneysLogic)
     useAttachedLogic(mountedCustomerJourneysLogic, mountedSceneLogic)
 
     if (journeysLoading) {
@@ -38,7 +37,6 @@ export function CustomerJourneys(): JSX.Element {
         return (
             <>
                 <CustomerJourneysEmptyState />
-                <AddJourneyModal />
             </>
         )
     }
@@ -52,9 +50,6 @@ export function CustomerJourneys(): JSX.Element {
                     options={journeyOptions}
                     size="small"
                 />
-                <LemonButton type="secondary" icon={<IconPlus />} size="small" onClick={showAddJourneyModal}>
-                    Add journey
-                </LemonButton>
                 {activeJourney && (
                     <LemonButton
                         icon={<IconTrash />}
@@ -76,8 +71,6 @@ export function CustomerJourneys(): JSX.Element {
             ) : (
                 <div className="text-muted text-center p-8">Insight not found</div>
             )}
-
-            <AddJourneyModal />
         </div>
     )
 }
