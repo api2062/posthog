@@ -161,6 +161,10 @@ class Resolver(CloningVisitor):
             end=node.end,
             initial_select_query=initial,
             subsequent_select_queries=subsequent,
+            limit=self.visit(node.limit) if node.limit is not None else None,
+            offset=self.visit(node.offset) if node.offset is not None else None,
+            limit_percent=node.limit_percent,
+            limit_with_ties=node.limit_with_ties,
         )
         result.type = ast.SelectSetQueryType(
             types=[result.initial_select_query.type, *(x.select_query.type for x in result.subsequent_select_queries)]  # type: ignore
@@ -639,8 +643,8 @@ class Resolver(CloningVisitor):
 
             node.table = cast(ast.SelectQuery, super().visit(node.table))
 
-            # Remap column names if alias_columns is provided (e.g. AS v(id, name))
-            if node.alias_columns and node.table.type:
+            # Remap column names if column_aliases is provided (e.g. AS v(id, name))
+            if node.column_aliases and node.table.type:
                 # Find the SelectQuery to count columns from the select list
                 inner_select: ast.SelectQuery | ast.SelectSetQuery = node.table
                 if isinstance(inner_select, ast.SelectSetQuery):
@@ -650,9 +654,9 @@ class Resolver(CloningVisitor):
                     inner_select = inner
 
                 num_cols = len(cast(ast.SelectQuery, inner_select).select)
-                if len(node.alias_columns) != num_cols:
+                if len(node.column_aliases) != num_cols:
                     raise QueryError(
-                        f"Subquery has {num_cols} column(s) but {len(node.alias_columns)} column name(s) were provided"
+                        f"Subquery has {num_cols} column(s) but {len(node.column_aliases)} column name(s) were provided"
                     )
 
                 # Remap the SelectQueryType columns dict
@@ -667,7 +671,7 @@ class Resolver(CloningVisitor):
                 select_list = cast(ast.SelectQuery, inner_select).select
                 select_query_type.columns = {
                     new_name: (expr.type if expr.type is not None else ast.UnknownType())
-                    for new_name, expr in zip(node.alias_columns, select_list)
+                    for new_name, expr in zip(node.column_aliases, select_list)
                 }
 
             if isinstance(node.table, ast.SelectQuery) and node.table.view_name is not None and node.alias is not None:
@@ -706,24 +710,24 @@ class Resolver(CloningVisitor):
             node = cast(ast.JoinExpr, clone_expr(node))
             node.table = cast(ast.ValuesQuery, self.visit(node.table))
 
-            # Auto-generate alias and alias_columns when omitted so the
+            # Auto-generate alias and column_aliases when omitted so the
             # printed SQL contains column names that match the resolved
             # SelectQueryType (sugar syntax like DuckDB's col0, col1, ...).
-            if not node.alias_columns and node.table.type:
-                node.alias_columns = list(node.table.type.columns.keys())
+            if not node.column_aliases and node.table.type:
+                node.column_aliases = list(node.table.type.columns.keys())
                 if node.alias is None:
                     node.alias = "values"
 
-            # Remap column names if alias_columns is provided
-            if node.alias_columns and node.table.type:
+            # Remap column names if column_aliases is provided
+            if node.column_aliases and node.table.type:
                 num_cols = len(node.table.type.columns)
-                if len(node.alias_columns) != num_cols:
+                if len(node.column_aliases) != num_cols:
                     raise QueryError(
-                        f"VALUES has {num_cols} column(s) but {len(node.alias_columns)} column name(s) were provided"
+                        f"VALUES has {num_cols} column(s) but {len(node.column_aliases)} column name(s) were provided"
                     )
                 original_columns = node.table.type.columns
                 node.table.type.columns = {
-                    new_name: list(original_columns.values())[i] for i, new_name in enumerate(node.alias_columns)
+                    new_name: list(original_columns.values())[i] for i, new_name in enumerate(node.column_aliases)
                 }
 
             if node.alias is not None:

@@ -3217,7 +3217,7 @@ def parser_test_factory(backend: HogQLParserBackend):
                             ]
                         ),
                         alias="v",
-                        alias_columns=["id", "name"],
+                        column_aliases=["id", "name"],
                     ),
                 ),
             )

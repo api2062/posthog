@@ -67,6 +67,20 @@ class TraversingVisitor(Visitor[None]):
     def visit_not(self, node: ast.Not):
         self.visit(node.expr)
 
+    def visit_named_argument(self, node: ast.NamedArgument):
+        self.visit(node.value)
+
+    def visit_unpivot_expr(self, node: ast.UnpivotExpr):
+        self.visit(node.table)
+        for col in node.columns:
+            self.visit(col)
+
+    def visit_unpivot_column(self, node: ast.UnpivotColumn):
+        self.visit(node.value_columns)
+        self.visit(node.name_columns)
+        for val in node.unpivot_values:
+            self.visit(val)
+
     def visit_between_expr(self, node: ast.BetweenExpr):
         self.visit(node.expr)
         self.visit(node.low)
@@ -191,6 +205,10 @@ class TraversingVisitor(Visitor[None]):
         self.visit(node.initial_select_query)
         for expr in node.subsequent_select_queries:
             self.visit(expr.select_query)
+        if node.limit is not None:
+            self.visit(node.limit)
+        if node.offset is not None:
+            self.visit(node.offset)
 
     def visit_lambda_argument_type(self, node: ast.LambdaArgumentType):
         pass
@@ -501,6 +519,34 @@ class CloningVisitor(Visitor[Any]):
             expr=self.visit(node.expr),
         )
 
+    def visit_named_argument(self, node: ast.NamedArgument):
+        return ast.NamedArgument(
+            start=None if self.clear_locations else node.start,
+            end=None if self.clear_locations else node.end,
+            type=None if self.clear_types else node.type,
+            name=node.name,
+            value=self.visit(node.value),
+        )
+
+    def visit_unpivot_expr(self, node: ast.UnpivotExpr):
+        return ast.UnpivotExpr(
+            start=None if self.clear_locations else node.start,
+            end=None if self.clear_locations else node.end,
+            type=None if self.clear_types else node.type,
+            table=self.visit(node.table),
+            columns=[self.visit(col) for col in node.columns],
+        )
+
+    def visit_unpivot_column(self, node: ast.UnpivotColumn):
+        return ast.UnpivotColumn(
+            start=None if self.clear_locations else node.start,
+            end=None if self.clear_locations else node.end,
+            type=None if self.clear_types else node.type,
+            value_columns=self.visit(node.value_columns),
+            name_columns=self.visit(node.name_columns),
+            unpivot_values=[self.visit(val) for val in node.unpivot_values],
+        )
+
     def visit_between_expr(self, node: ast.BetweenExpr):
         return ast.BetweenExpr(
             start=None if self.clear_locations else node.start,
@@ -696,7 +742,6 @@ class CloningVisitor(Visitor[Any]):
             table_final=node.table_final,
             alias=node.alias,
             column_aliases=node.column_aliases,
-            alias_columns=node.alias_columns,
             join_type=node.join_type,
             constraint=self.visit(node.constraint),
             sample=self.visit(node.sample),
@@ -759,6 +804,10 @@ class CloningVisitor(Visitor[Any]):
                 SelectSetNode(set_operator=expr.set_operator, select_query=self.visit(expr.select_query))
                 for expr in node.subsequent_select_queries
             ],
+            limit=self.visit(node.limit) if node.limit is not None else None,
+            offset=self.visit(node.offset) if node.offset is not None else None,
+            limit_percent=node.limit_percent,
+            limit_with_ties=node.limit_with_ties,
         )
 
     def visit_window_expr(self, node: ast.WindowExpr):

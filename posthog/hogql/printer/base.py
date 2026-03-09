@@ -141,6 +141,22 @@ class HogQLPrinter(Visitor[str]):
                     ret += f" {expr.set_operator} "
             ret += query
         self._indent += 1
+        if node.limit is not None:
+            limit_str = self.visit(node.limit)
+            if node.limit_percent:
+                limit_str += " PERCENT"
+            if node.limit_with_ties:
+                limit_str += " WITH TIES"
+            if self.pretty:
+                ret = ret.rstrip() + f"\n{self.indent(1)}LIMIT {limit_str}"
+            else:
+                ret += f" LIMIT {limit_str}"
+        if node.offset is not None:
+            offset_str = self.visit(node.offset)
+            if self.pretty:
+                ret = ret.rstrip() + f"\n{self.indent(1)}OFFSET {offset_str}"
+            else:
+                ret += f" OFFSET {offset_str}"
         if len(self.stack) > 1:
             return f"({ret.strip()})"
         return ret
@@ -421,8 +437,8 @@ class HogQLPrinter(Visitor[str]):
         elif isinstance(node.type, ast.SelectQueryAliasType) and node.alias is not None:
             join_strings.append(self.visit(node.table))
             alias_str = f"AS {self._print_identifier(node.alias)}"
-            if node.alias_columns:
-                col_names = ", ".join(self._print_identifier(c) for c in node.alias_columns)
+            if node.column_aliases:
+                col_names = ", ".join(self._print_identifier(c) for c in node.column_aliases)
                 alias_str += f" ({col_names})"
             join_strings.append(alias_str)
 
@@ -493,6 +509,20 @@ class HogQLPrinter(Visitor[str]):
 
     def visit_not(self, node: ast.Not):
         return f"not({self.visit(node.expr)})"
+
+    def visit_named_argument(self, node: ast.NamedArgument):
+        return f"{node.name} := {self.visit(node.value)}"
+
+    def visit_unpivot_expr(self, node: ast.UnpivotExpr):
+        table = self.visit(node.table)
+        columns = " ".join(self.visit(col) for col in node.columns)
+        return f"{table} UNPIVOT ({columns})"
+
+    def visit_unpivot_column(self, node: ast.UnpivotColumn):
+        value_cols = self.visit(node.value_columns)
+        name_cols = self.visit(node.name_columns)
+        values = ", ".join(self.visit(val) for val in node.unpivot_values)
+        return f"{value_cols} FOR {name_cols} IN ({values})"
 
     def visit_tuple_access(self, node: ast.TupleAccess):
         visited_tuple = self.visit(node.tuple)
