@@ -837,6 +837,7 @@ class ColumnsExpr(Expr):
     columns: Optional[list[Expr]] = None
     all_columns: bool = False
     exclude: Optional[list[str]] = None
+    replace: Optional[dict[str, Expr]] = None
 
 
 @dataclass(kw_only=True)
@@ -1041,8 +1042,13 @@ SetOperator = Literal[
     "INTERSECT",
     "INTERSECT ALL",
     "INTERSECT DISTINCT",
+    "INTERSECT BY NAME",
+    "INTERSECT ALL BY NAME",
+    "INTERSECT DISTINCT BY NAME",
     "EXCEPT",
     "EXCEPT ALL",
+    "EXCEPT BY NAME",
+    "EXCEPT ALL BY NAME",
 ]
 
 

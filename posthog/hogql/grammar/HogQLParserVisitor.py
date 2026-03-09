@@ -604,6 +604,11 @@ class HogQLParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by HogQLParser#ColumnExprColumnsExcludeReplace.
+    def visitColumnExprColumnsExcludeReplace(self, ctx:HogQLParser.ColumnExprColumnsExcludeReplaceContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by HogQLParser#ColumnExprColumnsExclude.
     def visitColumnExprColumnsExclude(self, ctx:HogQLParser.ColumnExprColumnsExcludeContext):
         return self.visitChildren(ctx)
@@ -636,6 +641,11 @@ class HogQLParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by HogQLParser#ColumnExprColumnsList.
     def visitColumnExprColumnsList(self, ctx:HogQLParser.ColumnExprColumnsListContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HogQLParser#ColumnExprColumnsReplace.
+    def visitColumnExprColumnsReplace(self, ctx:HogQLParser.ColumnExprColumnsReplaceContext):
         return self.visitChildren(ctx)
 
 
@@ -701,6 +711,16 @@ class HogQLParserVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by HogQLParser#columnLambdaExpr.
     def visitColumnLambdaExpr(self, ctx:HogQLParser.ColumnLambdaExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HogQLParser#columnsReplaceList.
+    def visitColumnsReplaceList(self, ctx:HogQLParser.ColumnsReplaceListContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by HogQLParser#columnsReplaceItem.
+    def visitColumnsReplaceItem(self, ctx:HogQLParser.ColumnsReplaceItemContext):
         return self.visitChildren(ctx)
 
 
