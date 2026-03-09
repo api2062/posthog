@@ -1,6 +1,6 @@
-import { useActions, useMountedLogic, useValues } from 'kea'
+import { useMountedLogic, useValues } from 'kea'
 
-import { LemonSelect, Spinner } from '@posthog/lemon-ui'
+import { Spinner } from '@posthog/lemon-ui'
 
 import { useAttachedLogic } from 'lib/logic/scenes/useAttachedLogic'
 
@@ -13,9 +13,8 @@ import { customerJourneysLogic } from './customerJourneysLogic'
 export function CustomerJourneys(): JSX.Element {
     const mountedSceneLogic = useMountedLogic(customerAnalyticsSceneLogic)
     const mountedCustomerJourneysLogic = customerJourneysLogic()
-    const { journeyOptions, journeysLoading, activeJourneyId, activeInsightLoading, activeJourneyFullQuery } =
+    const { journeyOptions, journeysLoading, activeInsightLoading, activeJourneyFullQuery } =
         useValues(mountedCustomerJourneysLogic)
-    const { setActiveJourneyId } = useActions(mountedCustomerJourneysLogic)
     useAttachedLogic(mountedCustomerJourneysLogic, mountedSceneLogic)
 
     if (journeysLoading) {
@@ -36,15 +35,6 @@ export function CustomerJourneys(): JSX.Element {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center gap-2">
-                <LemonSelect
-                    value={activeJourneyId}
-                    onChange={setActiveJourneyId}
-                    options={journeyOptions}
-                    size="small"
-                />
-            </div>
-
             {activeInsightLoading ? (
                 <div className="flex items-center justify-center p-8">
                     <Spinner />

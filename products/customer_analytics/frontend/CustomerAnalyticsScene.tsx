@@ -25,6 +25,7 @@ import { ProductIntentContext, ProductKey } from '~/queries/schema/schema-genera
 import { SessionInsights } from 'products/customer_analytics/frontend/components/Insights/SessionInsights'
 
 import { CustomerJourneys } from './components/CustomerJourneys/CustomerJourneys'
+import { CustomerJourneySelect } from './components/CustomerJourneys/CustomerJourneySelect'
 import { DeleteJourneyButton } from './components/CustomerJourneys/DeleteJourneyButton'
 import { journeyEditorLogic } from './components/CustomerJourneys/journeyEditorLogic'
 import { FeedbackBanner } from './components/FeedbackBanner'
@@ -121,6 +122,7 @@ export function CustomerAnalyticsScene({ tabId }: { tabId?: string }): JSX.Eleme
                             </div>
                         ) : activeTab === 'journeys' ? (
                             <>
+                                <CustomerJourneySelect />
                                 <LemonButton
                                     type="primary"
                                     size="small"
