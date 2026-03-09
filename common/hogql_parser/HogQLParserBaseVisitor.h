@@ -191,6 +191,14 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitValuesClause(HogQLParser::ValuesClauseContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitValuesRow(HogQLParser::ValuesRowContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitJoinExprOp(HogQLParser::JoinExprOpContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -604,6 +612,10 @@ public:
   }
 
   virtual std::any visitTableExprSubquery(HogQLParser::TableExprSubqueryContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitTableExprValues(HogQLParser::TableExprValuesContext *ctx) override {
     return visitChildren(ctx);
   }
 
