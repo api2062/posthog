@@ -867,6 +867,11 @@ class NamedArgument(Expr):
 
 
 @dataclass(kw_only=True)
+class PositionalRef(Expr):
+    index: int
+
+
+@dataclass(kw_only=True)
 class Call(Expr):
     name: str
     """Function name"""

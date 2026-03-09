@@ -513,6 +513,9 @@ class HogQLPrinter(Visitor[str]):
     def visit_named_argument(self, node: ast.NamedArgument):
         return f"{node.name} := {self.visit(node.value)}"
 
+    def visit_positional_ref(self, node: ast.PositionalRef):
+        return f"#{node.index}"
+
     def visit_unpivot_expr(self, node: ast.UnpivotExpr):
         table = self.visit(node.table)
         columns = " ".join(self.visit(col) for col in node.columns)
