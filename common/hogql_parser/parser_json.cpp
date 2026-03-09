@@ -950,7 +950,8 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
 
     Json join2_json = visitAsJSON(ctx->joinExpr(1));
     join2_json["join_type"] = join_op;
-    join2_json["constraint"] = visitAsJSON(ctx->joinConstraintClause());
+    auto constraint_ctx = ctx->joinConstraintClause();
+    join2_json["constraint"] = constraint_ctx ? visitAsJSON(constraint_ctx) : Json();
     Json join1_json = visitAsJSON(ctx->joinExpr(0));
     return chainJoinExprs(join1_json, join2_json);
   }
@@ -987,7 +988,12 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
   VISIT(JoinExprCrossOp) {
     Json join2_json = visitAsJSON(ctx->joinExpr(1));
     Json join1_json = visitAsJSON(ctx->joinExpr(0));
-    join2_json["join_type"] = "CROSS JOIN";
+    auto join_op_cross_ctx = ctx->joinOpCross();
+    if (join_op_cross_ctx->POSITIONAL()) {
+      join2_json["join_type"] = "POSITIONAL JOIN";
+    } else {
+      join2_json["join_type"] = "CROSS JOIN";
+    }
     return chainJoinExprs(join1_json, join2_json);
   }
 
@@ -1958,8 +1964,10 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
     string name = visitAsString(ctx->identifier());
 
     // if two LPARENs ()(), make sure the first one is at least an empty list
+    // FILTER adds an extra LPAREN, so account for it when detecting parametric calls
+    int lparen_threshold = ctx->FILTER() ? 2 : 1;
     Json params_json;
-    if (ctx->LPAREN(1)) {
+    if (ctx->LPAREN(lparen_threshold)) {
       params_json = visitAsJSONOrEmptyArray(ctx->columnExprs);
     } else {
       params_json = visitAsJSONOrNull(ctx->columnExprs);
@@ -1979,6 +1987,11 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
       json["order_by"] = visitAsJSON(order_expr_list_ctx);
     } else {
       json["order_by"] = Json();
+    }
+    if (ctx->filterExpr) {
+      json["filter_expr"] = visitAsJSON(ctx->filterExpr);
+    } else {
+      json["filter_expr"] = Json();
     }
     return json;
   }
@@ -2372,6 +2385,7 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
       columns.pushBack(std::move(col_json));
     }
     json["columns"] = std::move(columns);
+    json["include_nulls"] = ctx->INCLUDE() != nullptr;
     return json;
   }
 
