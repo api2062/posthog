@@ -135,6 +135,7 @@ class AddInsightRequestSerializer(serializers.Serializer):
 class ReorderTilesRequestSerializer(serializers.Serializer):
     tile_order = serializers.ListField(
         child=serializers.IntegerField(),
+        min_length=1,
         help_text="Array of tile IDs in the desired display order (top to bottom, left to right).",
     )
 

@@ -853,6 +853,7 @@ export const EnvironmentsDashboardsReorderTilesCreateQueryParams = zod.object({
 export const EnvironmentsDashboardsReorderTilesCreateBody = zod.object({
     tile_order: zod
         .array(zod.number())
+        .min(1)
         .describe('Array of tile IDs in the desired display order (top to bottom, left to right).'),
 })
 
@@ -2029,6 +2030,7 @@ export const DashboardsReorderTilesCreateQueryParams = zod.object({
 export const DashboardsReorderTilesCreateBody = zod.object({
     tile_order: zod
         .array(zod.number())
+        .min(1)
         .describe('Array of tile IDs in the desired display order (top to bottom, left to right).'),
 })
 

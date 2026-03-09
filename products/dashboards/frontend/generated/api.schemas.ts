@@ -360,7 +360,10 @@ export interface AddInsightRequestApi {
 }
 
 export interface ReorderTilesRequestApi {
-    /** Array of tile IDs in the desired display order (top to bottom, left to right). */
+    /**
+     * Array of tile IDs in the desired display order (top to bottom, left to right).
+     * @minItems 1
+     */
     tile_order: number[]
 }
 
