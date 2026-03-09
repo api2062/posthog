@@ -72,6 +72,10 @@ class TraversingVisitor(Visitor[None]):
         self.visit(node.low)
         self.visit(node.high)
 
+    def visit_is_distinct_from(self, node: ast.IsDistinctFrom):
+        self.visit(node.left)
+        self.visit(node.right)
+
     def visit_order_expr(self, node: ast.OrderExpr):
         self.visit(node.expr)
 
@@ -88,6 +92,13 @@ class TraversingVisitor(Visitor[None]):
     def visit_array_access(self, node: ast.ArrayAccess):
         self.visit(node.array)
         self.visit(node.property)
+
+    def visit_array_slice(self, node: ast.ArraySlice):
+        self.visit(node.array)
+        if node.slice_start is not None:
+            self.visit(node.slice_start)
+        if node.slice_end is not None:
+            self.visit(node.slice_end)
 
     def visit_array(self, node: ast.Array):
         for expr in node.exprs:
@@ -310,7 +321,8 @@ class TraversingVisitor(Visitor[None]):
         self.visit(node.over_expr)
 
     def visit_window_frame_expr(self, node: ast.WindowFrameExpr):
-        pass
+        if isinstance(node.frame_value, ast.Expr):
+            self.visit(node.frame_value)
 
     def visit_join_constraint(self, node: ast.JoinConstraint):
         self.visit(node.expr)
@@ -495,6 +507,16 @@ class CloningVisitor(Visitor[Any]):
             negated=node.negated,
         )
 
+    def visit_is_distinct_from(self, node: ast.IsDistinctFrom):
+        return ast.IsDistinctFrom(
+            start=None if self.clear_locations else node.start,
+            end=None if self.clear_locations else node.end,
+            type=None if self.clear_types else node.type,
+            left=self.visit(node.left),
+            right=self.visit(node.right),
+            negated=node.negated,
+        )
+
     def visit_order_expr(self, node: ast.OrderExpr):
         return ast.OrderExpr(
             start=None if self.clear_locations else node.start,
@@ -539,6 +561,16 @@ class CloningVisitor(Visitor[Any]):
             array=self.visit(node.array),
             property=self.visit(node.property),
             nullish=node.nullish,
+        )
+
+    def visit_array_slice(self, node: ast.ArraySlice):
+        return ast.ArraySlice(
+            start=None if self.clear_locations else node.start,
+            end=None if self.clear_locations else node.end,
+            type=None if self.clear_types else node.type,
+            array=self.visit(node.array),
+            slice_start=self.visit(node.slice_start) if node.slice_start is not None else None,
+            slice_end=self.visit(node.slice_end) if node.slice_end is not None else None,
         )
 
     def visit_array(self, node: ast.Array):
@@ -743,7 +775,7 @@ class CloningVisitor(Visitor[Any]):
             end=None if self.clear_locations else node.end,
             type=None if self.clear_types else node.type,
             frame_type=node.frame_type,
-            frame_value=node.frame_value,
+            frame_value=self.visit(node.frame_value) if isinstance(node.frame_value, ast.Expr) else node.frame_value,
         )
 
     def visit_join_constraint(self, node: ast.JoinConstraint) -> ast.JoinConstraint:

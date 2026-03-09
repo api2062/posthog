@@ -498,6 +498,11 @@ class HogQLPrinter(Visitor[str]):
         symbol = "?." if self.dialect == "hogql" and node.nullish else ""
         return f"{self.visit(node.array)}{symbol}[{self.visit(node.property)}]"
 
+    def visit_array_slice(self, node: ast.ArraySlice):
+        start_str = self.visit(node.slice_start) if node.slice_start is not None else ""
+        end_str = self.visit(node.slice_end) if node.slice_end is not None else ""
+        return f"{self.visit(node.array)}[{start_str}:{end_str}]"
+
     def visit_array(self, node: ast.Array):
         return f"[{', '.join([self.visit(expr) for expr in node.exprs])}]"
 
@@ -578,6 +583,14 @@ class HogQLPrinter(Visitor[str]):
         op = f"{expr}{not_kw} BETWEEN {low} AND {high}"
 
         return op
+
+    def visit_is_distinct_from(self, node: ast.IsDistinctFrom):
+        if self.dialect == "clickhouse":
+            raise QueryError("IS DISTINCT FROM is not supported in ClickHouse")
+        left = self.visit(node.left)
+        right = self.visit(node.right)
+        not_kw = " NOT" if node.negated else ""
+        return f"{left} IS{not_kw} DISTINCT FROM {right}"
 
     def visit_constant(self, node: ast.Constant):
         # Inline everything in HogQL
@@ -1307,10 +1320,14 @@ class HogQLPrinter(Visitor[str]):
             return f"{identifier}({', '.join(exprs)}) OVER {over}"
 
     def visit_window_frame_expr(self, node: ast.WindowFrameExpr):
-        if node.frame_type == "PRECEDING":
-            return f"{int(str(node.frame_value)) if node.frame_value is not None else 'UNBOUNDED'} PRECEDING"
-        elif node.frame_type == "FOLLOWING":
-            return f"{int(str(node.frame_value)) if node.frame_value is not None else 'UNBOUNDED'} FOLLOWING"
+        if node.frame_type in ("PRECEDING", "FOLLOWING"):
+            if node.frame_value is None:
+                value_str = "UNBOUNDED"
+            elif isinstance(node.frame_value, int):
+                value_str = str(node.frame_value)
+            else:
+                value_str = self.visit(node.frame_value)
+            return f"{value_str} {node.frame_type}"
         elif node.frame_type == "CURRENT ROW":
             return "CURRENT ROW"
         else:

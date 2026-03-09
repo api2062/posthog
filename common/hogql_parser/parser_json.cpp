@@ -1135,13 +1135,8 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
 
     if (ctx->PRECEDING() || ctx->FOLLOWING()) {
       json["frame_type"] = ctx->PRECEDING() ? "PRECEDING" : "FOLLOWING";
-      if (ctx->numberLiteral()) {
-        Json constant_json = visitAsJSON(ctx->numberLiteral());
-        if (constant_json.isObject() && constant_json.getObject().contains("value")) {
-          json["frame_value"] = constant_json["value"];
-        } else {
-          json["frame_value"] = nullptr;
-        }
+      if (ctx->columnExpr()) {
+        json["frame_value"] = visitAsJSON(ctx->columnExpr());
       } else {
         json["frame_value"] = nullptr;
       }
@@ -1154,8 +1149,18 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
 
   VISIT(Expr) { return visit(ctx->columnExpr()); }
 
-  VISIT_UNSUPPORTED(ColumnTypeExprCompound)
-  VISIT_UNSUPPORTED(ColumnTypeExprSimple)
+  VISIT(ColumnTypeExprCompound) {
+    string result;
+    for (auto ident : ctx->identifier()) {
+      if (!result.empty()) result += " ";
+      result += visitAsString(ident);
+    }
+    return Json(to_lower_copy(result));
+  }
+
+  VISIT(ColumnTypeExprSimple) {
+    return Json(to_lower_copy(visitAsString(ctx->identifier())));
+  }
 
   VISIT_UNSUPPORTED(ColumnTypeExprNested)
 
@@ -1256,8 +1261,23 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
 
   VISIT_UNSUPPORTED(ColumnExprSubstring)
 
-  VISIT_UNSUPPORTED(ColumnExprCast)
-  VISIT_UNSUPPORTED(ColumnExprTryCast)
+  VISIT(ColumnExprCast) {
+    Json json = Json::object();
+    json["node"] = "TypeCast";
+    if (!is_internal) addPositionInfo(json, ctx);
+    json["expr"] = visitAsJSON(ctx->columnExpr());
+    json["type_name"] = visitAsJSON(ctx->columnTypeExpr());
+    return json;
+  }
+
+  VISIT(ColumnExprTryCast) {
+    Json json = Json::object();
+    json["node"] = "TypeCast";
+    if (!is_internal) addPositionInfo(json, ctx);
+    json["expr"] = visitAsJSON(ctx->columnExpr());
+    json["type_name"] = visitAsJSON(ctx->columnTypeExpr());
+    return json;
+  }
 
   VISIT(ColumnExprPrecedence1) {
     string op;
@@ -1484,6 +1504,16 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
     return json;
   }
 
+  VISIT(ColumnExprIsDistinctFrom) {
+    Json json = Json::object();
+    json["node"] = "IsDistinctFrom";
+    if (!is_internal) addPositionInfo(json, ctx);
+    json["left"] = visitAsJSON(ctx->columnExpr(0));
+    json["right"] = visitAsJSON(ctx->columnExpr(1));
+    json["negated"] = ctx->NOT() != nullptr;
+    return json;
+  }
+
   VISIT(ColumnExprTrim) {
     const char* name;
     if (ctx->LEADING()) {
@@ -1523,7 +1553,27 @@ class HogQLParseTreeJSONConverter : public HogQLParserBaseVisitor {
     return json;
   }
 
-  VISIT_UNSUPPORTED(ColumnExprArraySlice)
+  VISIT(ColumnExprArraySlice) {
+    Json json = Json::object();
+    json["node"] = "ArraySlice";
+    if (!is_internal) addPositionInfo(json, ctx);
+    json["array"] = visitAsJSON(ctx->columnExpr(0));
+    // Grammar: columnExpr LBRACKET columnExpr? COLON columnExpr? RBRACKET
+    auto exprs = ctx->columnExpr();
+    if (exprs.size() == 3) {
+      json["slice_start"] = visitAsJSON(exprs[1]);
+      json["slice_end"] = visitAsJSON(exprs[2]);
+    } else if (exprs.size() == 2) {
+      auto colon_index = ctx->COLON()->getSymbol()->getTokenIndex();
+      auto expr1_stop = exprs[1]->stop->getTokenIndex();
+      if (expr1_stop < colon_index) {
+        json["slice_start"] = visitAsJSON(exprs[1]);
+      } else {
+        json["slice_end"] = visitAsJSON(exprs[1]);
+      }
+    }
+    return json;
+  }
 
   VISIT(ColumnExprNullArrayAccess) {
     Json json = Json::object();

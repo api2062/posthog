@@ -697,22 +697,22 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
 
     def visitWinFrameBound(self, ctx: HogQLParser.WinFrameBoundContext):
         if ctx.PRECEDING():
-            return ast.WindowFrameExpr(
-                frame_type="PRECEDING",
-                frame_value=self.visit(ctx.numberLiteral()).value if ctx.numberLiteral() else None,
-            )
+            frame_value = self.visit(ctx.columnExpr()) if ctx.columnExpr() else None
+            if isinstance(frame_value, ast.Constant) and isinstance(frame_value.value, (int, float)):
+                frame_value = int(frame_value.value)
+            return ast.WindowFrameExpr(frame_type="PRECEDING", frame_value=frame_value)
         if ctx.FOLLOWING():
-            return ast.WindowFrameExpr(
-                frame_type="FOLLOWING",
-                frame_value=self.visit(ctx.numberLiteral()).value if ctx.numberLiteral() else None,
-            )
+            frame_value = self.visit(ctx.columnExpr()) if ctx.columnExpr() else None
+            if isinstance(frame_value, ast.Constant) and isinstance(frame_value.value, (int, float)):
+                frame_value = int(frame_value.value)
+            return ast.WindowFrameExpr(frame_type="FOLLOWING", frame_value=frame_value)
         return ast.WindowFrameExpr(frame_type="CURRENT ROW")
 
     def visitExpr(self, ctx: HogQLParser.ExprContext):
         return self.visit(ctx.columnExpr())
 
     def visitColumnTypeExprSimple(self, ctx: HogQLParser.ColumnTypeExprSimpleContext):
-        raise NotImplementedError(f"Unsupported node: ColumnTypeExprSimple")
+        return self.visit(ctx.identifier())
 
     def visitColumnTypeExprNested(self, ctx: HogQLParser.ColumnTypeExprNestedContext):
         raise NotImplementedError(f"Unsupported node: ColumnTypeExprNested")
@@ -724,7 +724,7 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
         raise NotImplementedError(f"Unsupported node: ColumnTypeExprComplex")
 
     def visitColumnTypeExprCompound(self, ctx: HogQLParser.ColumnTypeExprCompoundContext):
-        raise NotImplementedError(f"Unsupported node: ColumnTypeExprCompound")
+        return " ".join(self.visit(ident) for ident in ctx.identifier())
 
     def visitColumnTypeExprParam(self, ctx: HogQLParser.ColumnTypeExprParamContext):
         raise NotImplementedError(f"Unsupported node: ColumnTypeExprParam")
@@ -795,10 +795,12 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
         raise NotImplementedError(f"Unsupported node: ColumnExprSubstring")
 
     def visitColumnExprCast(self, ctx: HogQLParser.ColumnExprCastContext):
-        raise NotImplementedError(f"Unsupported node: ColumnExprCast")
+        type_name = self.visit(ctx.columnTypeExpr())
+        return ast.TypeCast(expr=self.visit(ctx.columnExpr()), type_name=type_name.lower())
 
     def visitColumnExprTryCast(self, ctx: HogQLParser.ColumnExprTryCastContext):
-        raise NotImplementedError(f"Unsupported node: ColumnExprTryCast")
+        type_name = self.visit(ctx.columnTypeExpr())
+        return ast.TypeCast(expr=self.visit(ctx.columnExpr()), type_name=type_name.lower())
 
     def visitColumnExprPrecedence1(self, ctx: HogQLParser.ColumnExprPrecedence1Context):
         if ctx.SLASH():
@@ -949,6 +951,13 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
             op=ast.CompareOperationOp.NotEq if ctx.NOT() else ast.CompareOperationOp.Eq,
         )
 
+    def visitColumnExprIsDistinctFrom(self, ctx: HogQLParser.ColumnExprIsDistinctFromContext):
+        return ast.IsDistinctFrom(
+            left=self.visit(ctx.columnExpr(0)),
+            right=self.visit(ctx.columnExpr(1)),
+            negated=bool(ctx.NOT()),
+        )
+
     def visitColumnExprTrim(self, ctx: HogQLParser.ColumnExprTrimContext):
         args = [self.visit(ctx.columnExpr()), self.visit(ctx.string())]
         if ctx.LEADING():
@@ -968,7 +977,25 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
         return ast.ArrayAccess(array=object, property=property)
 
     def visitColumnExprArraySlice(self, ctx: HogQLParser.ColumnExprArraySliceContext):
-        raise NotImplementedError(f"Unsupported node: ColumnExprArraySlice")
+        # Grammar: columnExpr LBRACKET columnExpr? COLON columnExpr? RBRACKET
+        # ctx.columnExpr(0) is the array, columnExpr(1) is start (if present), columnExpr(2) or (1) is end (if present)
+        array = self.visit(ctx.columnExpr(0))
+        # The COLON separates start:end - we need to figure out which optional exprs are present
+        exprs = ctx.columnExpr()
+        start = None
+        end = None
+        if len(exprs) == 3:
+            start = self.visit(exprs[1])
+            end = self.visit(exprs[2])
+        elif len(exprs) == 2:
+            # Either start:  or  :end - check position relative to COLON
+            colon_index = ctx.COLON().symbol.tokenIndex
+            expr1_stop = exprs[1].stop.tokenIndex
+            if expr1_stop < colon_index:
+                start = self.visit(exprs[1])
+            else:
+                end = self.visit(exprs[1])
+        return ast.ArraySlice(array=array, slice_start=start, slice_end=end)
 
     def visitColumnExprNullArrayAccess(self, ctx: HogQLParser.ColumnExprNullArrayAccessContext):
         object: ast.Expr = self.visit(ctx.columnExpr(0))
