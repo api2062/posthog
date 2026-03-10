@@ -354,6 +354,24 @@ def get_all_schemas_for_source_id(source_id: str, team_id: int):
 
 STABLE_IDENTITY_KEYS = ("channel_id",)
 
+RESERVED_SYNC_TYPE_CONFIG_KEYS = frozenset(
+    {
+        "reset_pipeline",
+        "incremental_field",
+        "incremental_field_type",
+        "incremental_field_last_value",
+        "incremental_field_earliest_value",
+        "partitioning_enabled",
+        "partition_count",
+        "partition_size",
+        "partition_mode",
+        "partition_format",
+        "partitioning_keys",
+        "backfilled_partition_format",
+        "chunk_size_override",
+    }
+)
+
 
 def _resolve_renames(
     old_schemas: list["ExternalDataSchema"],
@@ -407,7 +425,9 @@ def sync_old_schemas_with_new_schemas(
 
     for schema_name in schemas_to_create:
         defaults: dict[str, Any] = {"should_sync": False}
-        schema_metadata = new_schemas.get(schema_name, {})
+        schema_metadata = {
+            k: v for k, v in new_schemas.get(schema_name, {}).items() if k not in RESERVED_SYNC_TYPE_CONFIG_KEYS
+        }
         if schema_metadata:
             defaults["sync_type_config"] = schema_metadata
 
@@ -424,7 +444,9 @@ def sync_old_schemas_with_new_schemas(
 
     # Update metadata on existing schemas that already exist
     for old_schema in old_schemas:
-        schema_metadata = new_schemas.get(old_schema.name, {})
+        schema_metadata = {
+            k: v for k, v in new_schemas.get(old_schema.name, {}).items() if k not in RESERVED_SYNC_TYPE_CONFIG_KEYS
+        }
         if schema_metadata:
             updated = False
             for key, value in schema_metadata.items():
