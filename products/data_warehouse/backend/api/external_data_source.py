@@ -482,6 +482,7 @@ class ExternalDataSourceViewSet(TeamAndOrgViewSetMixin, AccessControlViewSetMixi
 
         source_schemas = source.get_schemas(source_config, self.team_id)
         schema_names = [schema.name for schema in source_schemas]
+        schema_metadata_by_name = {s.name: s.metadata for s in source_schemas}
 
         payload_schemas = payload.get("schemas", None)
         if not payload_schemas or not isinstance(payload_schemas, list):
@@ -524,6 +525,12 @@ class ExternalDataSourceViewSet(TeamAndOrgViewSetMixin, AccessControlViewSetMixi
                     data={"message": "Incremental schemas given do not have an incremental field type set"},
                 )
 
+            sync_type_config: dict = {}
+            if requires_incremental_fields:
+                sync_type_config["incremental_field"] = incremental_field
+                sync_type_config["incremental_field_type"] = incremental_field_type
+            sync_type_config.update(schema_metadata_by_name.get(schema.get("name"), {}))
+
             schema_model = ExternalDataSchema.objects.create(
                 name=schema.get("name"),
                 team=self.team,
@@ -531,14 +538,7 @@ class ExternalDataSourceViewSet(TeamAndOrgViewSetMixin, AccessControlViewSetMixi
                 should_sync=should_sync,
                 sync_type=sync_type,
                 sync_time_of_day=sync_time_of_day,
-                sync_type_config=(
-                    {
-                        "incremental_field": incremental_field,
-                        "incremental_field_type": incremental_field_type,
-                    }
-                    if requires_incremental_fields
-                    else {}
-                ),
+                sync_type_config=sync_type_config,
             )
 
             if should_sync:
