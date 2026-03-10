@@ -70,21 +70,23 @@ class SlackSource(SimpleSource[SlackSourceConfig], OAuthMixin):
 
         integration = self.get_oauth_integration(config.slack_integration_id, team_id)
         access_token = integration.access_token
-        if access_token:
-            msg_config = messages_endpoint_config()
-            channels = get_channels(access_token)
-            for ch in channels:
-                if ch["name"] in ENDPOINTS:
-                    continue
-                schemas.append(
-                    SourceSchema(
-                        name=ch["name"],
-                        supports_incremental=len(msg_config.incremental_fields) > 0,
-                        supports_append=len(msg_config.incremental_fields) > 0,
-                        incremental_fields=msg_config.incremental_fields,
-                        metadata={"channel_id": ch["id"]},
-                    )
+        if not access_token:
+            raise ValueError("Slack access token not found")
+
+        msg_config = messages_endpoint_config()
+        channels = get_channels(access_token)
+        for ch in channels:
+            if ch["name"] in ENDPOINTS:
+                continue
+            schemas.append(
+                SourceSchema(
+                    name=ch["name"],
+                    supports_incremental=len(msg_config.incremental_fields) > 0,
+                    supports_append=len(msg_config.incremental_fields) > 0,
+                    incremental_fields=msg_config.incremental_fields,
+                    metadata={"channel_id": ch["id"]},
                 )
+            )
 
         return schemas
 
