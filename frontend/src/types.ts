@@ -896,13 +896,6 @@ export enum ProgressStatus {
     Complete = 'complete',
 }
 
-export enum ExperimentProgressStatus {
-    Draft = 'draft',
-    Running = 'running',
-    Paused = 'paused',
-    Complete = 'complete',
-}
-
 export enum ExperimentStatus {
     Draft = 'draft',
     Running = 'running',
@@ -1013,6 +1006,7 @@ export interface GroupPropertyFilter extends BasePropertyFilter {
     type: PropertyFilterType.Group
     group_type_index?: integer | null
     operator: PropertyOperator
+    group_key_names?: Record<string, string>
 }
 
 export type LogPropertyFilterType =
@@ -4176,6 +4170,7 @@ export interface EventDefinition {
     verified_at?: string
     verified_by?: string
     is_action?: boolean
+    is_data_warehouse?: boolean
     hidden?: boolean
     default_columns?: string[]
     enforcement_mode?: SchemaEnforcementMode
@@ -4800,6 +4795,7 @@ export interface SubscriptionType {
     insight?: number
     dashboard?: number
     dashboard_export_insights?: number[]
+    integration_id?: number | null
     target_type: string
     target_value: string
     frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
