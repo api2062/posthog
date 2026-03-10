@@ -53,6 +53,8 @@ class SlackSource(SimpleSource[SlackSourceConfig], OAuthMixin):
             "missing_scope": "Your Slack integration is missing required scopes. Please reconnect the source.",
             "not_in_channel": "The Slack bot is not a member of this channel. Please invite the bot to the channel and try again.",
             "channel_not_found": "This Slack channel was not found. It may have been deleted or the bot lacks permission to access it.",
+            "Integration not found": "Your Slack integration was not found. Please reconnect the source.",
+            "Slack access token not found": "Your Slack access token is missing. Please reconnect the source.",
         }
 
     def get_schemas(self, config: SlackSourceConfig, team_id: int, with_counts: bool = False) -> list[SourceSchema]:
