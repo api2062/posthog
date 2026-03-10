@@ -414,8 +414,8 @@ def sync_old_schemas_with_new_schemas(
     # Rename schemas matched by stable identity before name-based diffing
     _resolve_renames(old_schemas, new_schemas)
 
-    new_schema_names = list(new_schemas.keys())
-    old_schemas_names = [schema.name for schema in old_schemas]
+    new_schema_names = new_schemas.keys()
+    old_schemas_names = {schema.name for schema in old_schemas}
 
     schemas_to_create = [name for name in new_schema_names if name not in old_schemas_names]
 
