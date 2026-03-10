@@ -424,10 +424,32 @@ def sync_old_schemas_with_new_schemas(
     actually_created: list[str] = []
 
     for schema_name in schemas_to_create:
-        defaults: dict[str, Any] = {"should_sync": False}
         schema_metadata = {
             k: v for k, v in new_schemas.get(schema_name, {}).items() if k not in RESERVED_SYNC_TYPE_CONFIG_KEYS
         }
+
+        deleted_obj = (
+            ExternalDataSchema.objects.filter(team_id=team_id, source_id=source_id, name=schema_name, deleted=True)
+            .order_by("-updated_at", "-created_at")
+            .first()
+        )
+        if deleted_obj is not None:
+            deleted_obj.deleted = False
+            deleted_obj.deleted_at = None
+            deleted_obj.should_sync = False
+            if schema_metadata:
+                deleted_obj.sync_type_config = {
+                    **(deleted_obj.sync_type_config or {}),
+                    **schema_metadata,
+                }
+            update_fields = ["deleted", "deleted_at", "should_sync", "updated_at"]
+            if schema_metadata:
+                update_fields.append("sync_type_config")
+            deleted_obj.save(update_fields=update_fields)
+            actually_created.append(schema_name)
+            continue
+
+        defaults: dict[str, Any] = {"should_sync": False}
         if schema_metadata:
             defaults["sync_type_config"] = schema_metadata
 
@@ -436,11 +458,6 @@ def sync_old_schemas_with_new_schemas(
         )
         if created:
             actually_created.append(schema_name)
-        elif obj.deleted:
-            obj.deleted = False
-            obj.deleted_at = None
-            obj.should_sync = False
-            obj.save(update_fields=["deleted", "deleted_at", "should_sync"])
 
     # Update metadata on existing schemas that already exist
     for old_schema in old_schemas:
