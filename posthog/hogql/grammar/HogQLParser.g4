@@ -56,7 +56,7 @@ select: (selectSetStmt | selectStmt | hogqlxTagElement) SEMICOLON? EOF;
 selectStmtWithParens: selectStmt | withClause LPAREN selectSetStmt RPAREN | LPAREN selectSetStmt RPAREN | placeholder;
 
 subsequentSelectSetClause: (EXCEPT ALL (BY NAME)? | EXCEPT (BY NAME)? | UNION ALL (BY NAME)? | UNION DISTINCT (BY NAME)? | UNION (BY NAME)? | INTERSECT ALL (BY NAME)? | INTERSECT DISTINCT (BY NAME)? | INTERSECT (BY NAME)?) selectStmtWithParens;
-selectSetStmt: selectStmtWithParens (subsequentSelectSetClause)* limitAndOffsetClauseOptional?;
+selectSetStmt: selectStmtWithParens (subsequentSelectSetClause)* orderByClause? limitAndOffsetClauseOptional?;
 limitAndOffsetClauseOptional
     : LIMIT columnExpr PERCENT? (COMMA columnExpr)? (WITH TIES)?
     | LIMIT columnExpr PERCENT? (WITH TIES)? OFFSET columnExpr
@@ -114,6 +114,7 @@ valuesRow: LPAREN columnExpr (COMMA columnExpr)* RPAREN;
 
 joinExpr
     : joinExpr NATURAL? joinOp? JOIN joinExpr joinConstraintClause?  # JoinExprOp
+    | joinExpr POSITIONAL JOIN joinExpr joinConstraintClause?                # JoinExprPositional
     | joinExpr joinOpCross joinExpr                                          # JoinExprCrossOp
     | tableExpr FINAL? sampleClause?                                         # JoinExprTable
     | LPAREN joinExpr RPAREN                                                 # JoinExprParens
@@ -128,7 +129,6 @@ joinOp
     ;
 joinOpCross
     : CROSS JOIN
-    | POSITIONAL JOIN
     | COMMA
     ;
 joinConstraintClause
@@ -195,6 +195,10 @@ columnExpr
     | COLUMNS LPAREN ASTERISK EXCLUDE LPAREN identifierList RPAREN RPAREN                 # ColumnExprColumnsExclude
     | COLUMNS LPAREN ASTERISK REPLACE LPAREN columnsReplaceList RPAREN RPAREN             # ColumnExprColumnsReplace
     | COLUMNS LPAREN ASTERISK RPAREN                                                      # ColumnExprColumnsAll
+    | COLUMNS LPAREN identifier DOT ASTERISK EXCLUDE LPAREN identifierList RPAREN REPLACE LPAREN columnsReplaceList RPAREN RPAREN  # ColumnExprColumnsQualifiedExcludeReplace
+    | COLUMNS LPAREN identifier DOT ASTERISK EXCLUDE LPAREN identifierList RPAREN RPAREN  # ColumnExprColumnsQualifiedExclude
+    | COLUMNS LPAREN identifier DOT ASTERISK REPLACE LPAREN columnsReplaceList RPAREN RPAREN  # ColumnExprColumnsQualifiedReplace
+    | COLUMNS LPAREN identifier DOT ASTERISK RPAREN                                       # ColumnExprColumnsQualifiedAll
     | ASTERISK COLUMNS LPAREN STRING_LITERAL RPAREN                                      # ColumnExprSpreadColumnsRegex
     | ASTERISK COLUMNS LPAREN columnExprList RPAREN                                      # ColumnExprSpreadColumnsList
     | identifier (LPAREN columnExprs=columnExprList? RPAREN) (LPAREN DISTINCT? columnArgList=columnExprList? RPAREN)? OVER LPAREN windowExpr RPAREN # ColumnExprWinFunction
