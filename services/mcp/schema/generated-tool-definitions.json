@@ -209,12 +209,12 @@
             "readOnlyHint": false
         }
     },
-    "feature-flag-get-all": {
-        "description": "Get feature flags in the current project. Supports list filters including search by feature flag key or name (case-insensitive), then use the returned ID for get/update/delete tools.",
+    "feature-flag-get-definition": {
+        "description": "Get a feature flag by ID.",
         "category": "Feature flags",
         "feature": "flags",
-        "summary": "Get all feature flags",
-        "title": "Get all feature flags",
+        "summary": "Get feature flag definition",
+        "title": "Get feature flag definition",
         "required_scopes": ["feature_flag:read"],
         "new_mcp": false,
         "annotations": {
@@ -224,12 +224,12 @@
             "readOnlyHint": true
         }
     },
-    "feature-flag-get-definition": {
-        "description": "Get a feature flag by ID.",
+    "feature-flag-get-all": {
+        "description": "Get feature flags in the current project. Supports list filters including search by feature flag key or name (case-insensitive), then use the returned ID for get/update/delete tools.",
         "category": "Feature flags",
         "feature": "flags",
-        "summary": "Get feature flag definition",
-        "title": "Get feature flag definition",
+        "summary": "Get all feature flags",
+        "title": "Get all feature flags",
         "required_scopes": ["feature_flag:read"],
         "new_mcp": false,
         "annotations": {
