@@ -459,7 +459,7 @@ class ConversationViewSet(TeamAndOrgViewSetMixin, ListModelMixin, RetrieveModelM
                 try:
                     client = sync_connect()
                     handle = client.get_workflow_handle(task_run.workflow_id)
-                    async_to_sync(handle.signal)(ProcessTaskWorkflow.send_followup_message, content)
+                    asgi_async_to_sync(handle.signal)(ProcessTaskWorkflow.send_followup_message, content)
                 except Exception as e:
                     logger.warning(
                         "sandbox_followup_signal_failed",
