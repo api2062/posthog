@@ -646,6 +646,15 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
         last_join.next_join = join2
         return join1
 
+    def visitJoinExprPivot(self, ctx: HogQLParser.JoinExprPivotContext):
+        join = self.visit(ctx.joinExpr())
+        expr_lists = ctx.columnExprList()
+        aggregates = self.visit(expr_lists[0])
+        pivot_columns = [self.visit(col) for col in ctx.pivotColumnList().pivotColumn()]
+        group_by = self.visit(expr_lists[1]) if len(expr_lists) > 1 else None
+        pivot = ast.PivotExpr(table=join, aggregates=aggregates, columns=pivot_columns, group_by=group_by)
+        return ast.JoinExpr(table=pivot)
+
     def visitJoinOpInner(self, ctx: HogQLParser.JoinOpInnerContext):
         tokens = []
         if ctx.ALL():
@@ -1038,6 +1047,9 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
 
         return ast.Call(name=name, args=[ast.Constant(value=int_count)])
 
+    def visitColumnExprIgnoreNulls(self, ctx: HogQLParser.ColumnExprIgnoreNullsContext):
+        return self.visit(ctx.columnExpr())
+
     def visitColumnExprIsNull(self, ctx: HogQLParser.ColumnExprIsNullContext):
         return ast.CompareOperation(
             left=self.visit(ctx.columnExpr()),
@@ -1423,7 +1435,8 @@ class HogQLParseTreeConverter(ParseTreeVisitor):
         tuple_or_singles = ctx.columnExprTupleOrSingle()
         value_columns = self.visit(tuple_or_singles[0])
         name_columns = self.visit(tuple_or_singles[1])
-        unpivot_values = self.visit(ctx.columnExprList())
+        all_lists = ctx.columnExprList()
+        unpivot_values = self.visit(all_lists[0] if isinstance(all_lists, list) else all_lists)
         return ast.UnpivotColumn(
             value_columns=value_columns,
             name_columns=name_columns,
