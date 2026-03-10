@@ -474,6 +474,13 @@ export interface TaskRunRelayMessageRequestApi {
     text: string
 }
 
+export interface TaskRunRelayMessageResponseApi {
+    /** Relay status: 'accepted' or 'skipped' */
+    status: string
+    /** Relay workflow ID when accepted */
+    relay_id?: string
+}
+
 /**
  * * `needs_setup` - needs_setup
  * `detected` - detected
